@@ -103,6 +103,32 @@ func TestGetUsers(t *testing.T) {
 	clearTable()
 }
 
+func TestGetUser(t *testing.T) {
+
+	//Insert a faked user
+	statement := `INSERT INTO users (name, age) VALUES ('Johnny', 30)`
+	_, err := app.DB.Exec(statement)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req, err := http.NewRequest(http.MethodGet, "/user/1", nil)
+	res := executeRequest(req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	u := models.User{}
+	err = json.Unmarshal(res.Body.Bytes(), &u)
+
+	assert.NoError(t, err)
+	assert.IsType(t, models.User{}, u)
+	assert.Equal(t, "Johnny", u.Name)
+	assert.Equal(t, 30, u.Age)
+
+	clearTable()
+}
+
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
 	app.Router.ServeHTTP(rr, req)
